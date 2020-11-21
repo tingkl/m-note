@@ -38,6 +38,13 @@ router.post('/notes', async function (ctx) {
     ctx.body = RS.success(notes, page);
 });
 
+router.get('/sort/:userId', async function (ctx) {
+    let userId = ctx.params.userId;
+    let notes = await Note.find({userId, inUse: true, private: false}, false, {name: 1, time: 1});
+    let user = await User.basic(userId);
+    ctx.body = RS.success({notes, user});
+});
+
 router.post('/folders', async function (ctx) {
     let {userId} = ctx.request.body;
     let condition = {
@@ -94,15 +101,15 @@ router.post('/getNote', async function (ctx) {
     }
 });
 
-router.post('/getPage', async function (ctx) {
+router.post('/getUser', async function (ctx) {
     let {userId, key} = ctx.request.body;
+    let myId = ctx.session.user ? ctx.session.user._id.toString() : '';
+    let fields = {'account.name': 1, 'account.photo': 1, 'account.desc': 1,  'account.word': 1,  preview: 1};
     if (['contact', 'link'].includes(key)) {
-        let myId = ctx.session.user ? ctx.session.user._id.toString() : '';
-        let user = await User.findById(userId, {'account.name': 1, 'account.photo': 1, 'account.desc': 1, preview: 1, ['page.' + key]: 1});
-        ctx.body = RS.success({user, myself: user._id.toString() === myId});
-    } else {
-        throw new Exception(CodeMsg.InvalidParams, 'contact|link');
+       fields['page.' + key] = 1;
     }
+    let user = await User.findById(userId, fields);
+    ctx.body = RS.success({user, myself: user._id.toString() === myId});
 });
 
 router.post('/savePage', async function (ctx) {

@@ -133,7 +133,7 @@ const schemaDefinition = {
             index: true,
             unique: true
         },
-        // 自我简介
+        // 自我介绍评价
         desc: {
             type: String,
             default: ''
@@ -366,8 +366,8 @@ class User extends Mongo {
     }
 
     async updateAccount(user, account) {
-        let {photo, name, email, desc} = await VS.UserAccount.doValidate(account);
-        return this.findByIdAndUpdate(user._id, {'account.photo': photo, 'account.name': name, 'account.email': email, 'account.desc': desc});
+        let {photo, name, email, desc, word} = await VS.UserAccount.doValidate(account);
+        return this.findByIdAndUpdate(user._id, {'account.photo': photo, 'account.name': name, 'account.email': email, 'account.desc': desc, 'account.word': word});
     }
 
     async updatePreviewColor(user, {preview, color}) {

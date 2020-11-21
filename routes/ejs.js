@@ -8,7 +8,7 @@ router.get('/', async function (ctx) {
 });
 router.get('/:ejs', async function (ctx, next) {
     const ejs = ctx.params.ejs.replace('.html', '');
-    if (['main', 'search', 'note', 'blog', '404', 'markdown', 'index', 'other'].includes(ejs)) {
+    if (['main', 'search', 'note', 'blog', '404', 'markdown', 'index', 'other', 'message'].includes(ejs)) {
         let user = ctx.session.user || false;
         let requireUser = false;
         if (ejs === 'main') {
