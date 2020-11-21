@@ -1,5 +1,11 @@
-# MNote
+# ![](https://mnote.tingkl.com/file/MBledr3ZNbZCvbhbxIa5KQ.png?h=32) MNote
 [MNote官网](https://mnote.tingkl.com)
+
+![](https://mnote.tingkl.com/file/nv3kR4D79S3QQYefoxj3Tw.png)
+>pc端
+
+![](https://mnote.tingkl.com/file/qhPZ1Tbisowu2E8A2iCWJA.png)
+>移动端
 
 ## 为什么写这个项目？
 
@@ -21,4 +27,14 @@
 
 在移动端写作效率是极低的，并不是疼点，所以并没有将精力耗费在不重要的场景。
 
+
+## 如何搭建
+
+### redis
+
+### elasticsearch
+
+### mongodb
+
+### 修改fmbt/cf.js
 
