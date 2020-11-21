@@ -1,3 +1,5 @@
+[TOC]
+
 # ![](https://mnote.tingkl.com/file/MBledr3ZNbZCvbhbxIa5KQ.png?h=32) MNote
 [MNote官网](https://mnote.tingkl.com)
 
@@ -29,12 +31,24 @@
 
 
 ## 如何搭建
+### 安装库
 
-### redis
+npm install
 
-### elasticsearch
-
-### mongodb
+### 软件依赖
+redis elasticsearch mongodb
 
 ### 修改fmbt/cf.js
+
+修改为个人的配置即可
+
+## 启动项目
+
+// 本地开发环境
+npm start
+
+// pm2启动
+
+pm2 start pm2.json
+
 
