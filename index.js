@@ -14,6 +14,8 @@ const note = require('./routes/note');
 const blog = require('./routes/blog');
 const middle = require('./fmbt/middle');
 const file = require('./fmbt/router/file');
+const comment = require('./routes/comment');
+
 const cf = require('./fmbt/cf');
 const schedule = require('./service/schedule');
 // 用于session加密
@@ -48,6 +50,8 @@ app.use(folder.routes()).use(folder.allowedMethods());
 app.use(note.routes()).use(note.allowedMethods());
 app.use(space.routes()).use(space.allowedMethods());
 app.use(file.routes()).use(file.allowedMethods());
+app.use(comment.routes()).use(comment.allowedMethods());
+
 app.use(serve(cf.publicDirPath, {
     gzip: true
     // setHeaders (res, filePath, stats) {

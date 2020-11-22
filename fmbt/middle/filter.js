@@ -19,13 +19,15 @@ const authAPIs = [
     {method: Method.POST, reg: /\/note\/searchPage/},
     {method: Method.GET, reg: /\/note\/clear\/expire/},
     {method: Method.GET, reg: /\/user\/render/},
+    {method: Method.POST, reg: /\/comment\/searchPage/},
     {method: Method.ALL, reg: /\/blog\/savePage/, auth: {key: 'user'}},
     {method: Method.ALL, reg: /\/blog\/.*/},
     {method: Method.ALL, reg: /\/user\/.*/, auth: {key: 'user'}},
     {method: Method.ALL, reg: /\/folder\/.*/, auth: {key: 'user'}},
     {method: Method.ALL, reg: /\/space\/.*/, auth: {key: 'user'}},
     {method: Method.ALL, reg: /\/note\/.*/, auth: {key: 'user'}},
-    {method: Method.POST, reg: /\/file\/.*/, auth: {key: 'user'}}
+    {method: Method.POST, reg: /\/file\/.*/, auth: {key: 'user'}},
+    {method: Method.POST, reg: /\/comment\/post/, auth: {key: 'user'}}
     // {method: Method.GET, reg: /\/note\/.*/, auth: {key: 'user', value: 'admin'}}
 ];
 const crossAPIS = [
