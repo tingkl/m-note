@@ -25,7 +25,12 @@ function replace(md5) {
         return '';
     });
 }
-module.exports = {
+
+const saltForm ='awesome';
+const saltDB = 'amazing';
+const me = {
+    saltDB,
+    saltForm,
     fromFile(filePath, encoding = 'base64') {
         return new Promise((resolve, reject) => {
             let md5Sum = crypto.createHash('md5');
@@ -37,7 +42,7 @@ module.exports = {
             stream.on('end', function () {
                 let md5 = md5Sum.digest(encoding);
                 if (encoding === 'base64') {
-                    md5 =replace(md5);
+                    md5 = replace(md5);
                 }
                 console.log('文件:' + filePath + ', MD5签名为:' + md5 + ', 耗时:' + (Date.now() - start) / 1000 + "秒");
                 resolve(md5);
@@ -53,5 +58,19 @@ module.exports = {
             md5 = replace(md5);
         }
         return md5;
+    },
+    inputPass2FormPass(inputPass) {
+        // ""不能省略，否则两个char做int运算了
+        let str = '' + saltForm.charAt(0) + saltForm.charAt(2) + inputPass + saltForm.charAt(5) + saltForm.charAt(4);
+        let formPass = me.fromText(str, 'hex');
+        console.info('inputPass: %s -> str: %s -> formPass: %s', inputPass, str, formPass);
+        return formPass;
+    },
+    formPass2DBPass(formPass) {
+        let str = '' + saltDB.charAt(0) + saltDB.charAt(2) + formPass + saltDB.charAt(5) + saltDB.charAt(4);
+        let dbPass = me.fromText(str, 'hex');
+        console.info('formPass: %s -> dbPass: %s', formPass, dbPass);
+        return dbPass;
     }
 };
+module.exports = me;

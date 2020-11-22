@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const Exception = require('../fmbt/exception');
 const Space = require('./space');
 const Bus = require('../fmbt/bus');
-
+const {formPass2DBPass} = require('../fmbt/util/md5');
 const VS = require('../fmbt/validator');
 const schemaDefinition = {
     wx: {},
@@ -40,13 +40,13 @@ const schemaDefinition = {
             },
             // 自动矫正术语
             fixTermTypo: {
-                type: Boolean,
-                default: true
+                type: Boolean, // github将变成GitHub
+                default: false
             },
             // 自动矫正标点
             chinesePunct: {
-                type: Boolean,
-                default: true
+                type: Boolean,  // 英文标点自动变成中文标点，将导致. => 。
+                default: false
             },
             // ==Mark 标记==语法
             mark: {
@@ -214,6 +214,18 @@ VS.UserAccount = {
     }
 };
 
+VS.SignUp = {
+    password: {
+        required: true
+    },
+    name: {
+        required: true
+    },
+    email: {
+        required: true, type: 'email'
+    }
+};
+
 VS.UserPreview = {
     maxWidth: {
         type: 'number',
@@ -231,12 +243,12 @@ VS.UserPreview = {
             // 自动矫正术语
             fixTermTypo: {
                 type: 'boolean',
-                required: true
+                required: false // github会自动改成GitHub
             },
             // 自动矫正标点
             chinesePunct: {
                 type: 'boolean',
-                required: true
+                required: false // 中文下，会将英文.->。,->,
             },
             // ==Mark 标记==语法
             mark: {
@@ -367,7 +379,13 @@ class User extends Mongo {
 
     async updateAccount(user, account) {
         let {photo, name, email, desc, word} = await VS.UserAccount.doValidate(account);
-        return this.findByIdAndUpdate(user._id, {'account.photo': photo, 'account.name': name, 'account.email': email, 'account.desc': desc, 'account.word': word});
+        return this.findByIdAndUpdate(user._id, {
+            'account.photo': photo,
+            'account.name': name,
+            'account.email': email,
+            'account.desc': desc,
+            'account.word': word
+        });
     }
 
     async updatePreviewColor(user, {preview, color}) {
@@ -392,9 +410,16 @@ class User extends Mongo {
     }
 
     async signUpByAccount(account) {
-        let user = await this.findOne({'account.email': account.email});
+        let {email, password, name} = await VS.SignUp.doValidate(account);
+        let user = await this.findOne({'account.email': email});
         if (!user) {
-            user = await this.save({account});
+            user = await this.save({
+                account: {
+                    email,
+                    password: formPass2DBPass(password),
+                    name
+                }
+            });
             await Space.createFirstSpace(user, 'My First Space');
             return user;
         } else {
@@ -405,7 +430,7 @@ class User extends Mongo {
     async signInByAccount(account) {
         let condition = {
             'account.email': account.email,
-            'account.password': account.password
+            'account.password': formPass2DBPass(account.password)
         };
         let user = await this.findOneAndUpdate(condition, {'time.signIn': Date.now()});
         if (user) {
