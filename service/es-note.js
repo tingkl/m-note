@@ -92,36 +92,38 @@ class Note extends Elastic {
                 }
             })
         }
-        if (folderIds) {
-            must.push({
+        let should = [
+            {
+                match: {
+                    name: {
+                        // name中出现权重大
+                        query: key,
+                        boost: 2
+                    }
+                }
+            },
+            {
+                match: {
+                    md: {
+                        query: key,
+                        boost: 1
+                    }
+                }
+            }
+        ]
+        if (folderIds && folderIds.length > 0) {
+            should.push({
                 terms: {
-                    folderId: folderIds
+                    folderId: folderIds,
+                    boost: 1
                 }
             })
         }
-        // console.log(JSON.stringify(must), _source)
+        // console.log(JSON.stringify(should), _source)
         return this._searchPage({
             bool: {
                 must,
-                should: [
-                    {
-                        match: {
-                            name: {
-                                // name中出现权重大
-                                query: key,
-                                boost: 2
-                            }
-                        }
-                    },
-                    {
-                        match: {
-                            md: {
-                                query: key,
-                                boost: 1
-                            }
-                        }
-                    }
-                ],
+                should,
                 minimum_should_match: 1 // 否则should可以都不满足
             }
         }, page, {_source})

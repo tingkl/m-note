@@ -135,8 +135,9 @@ function convertTimeUpdate(update) {
     delete update['time.update'];
     return update;
 }
+
 class Note extends Mongo {
-    async share (user, params) {
+    async share(user, params) {
         if (user) {
             let userId = user._id;
             let {noteId, expireDays} = await VS.CreateLink.doValidate(params);
@@ -164,6 +165,10 @@ class Note extends Mongo {
             }
             return EsNote.searchPage(condition, {current: 1, size: 10000});
         } else {
+            if (condition.folderIds) {
+                condition.folderId = {$in: condition.folderIds};
+                delete condition.folderIds;
+            }
             return this.find(condition, {index: 1}, fields);
         }
     }
@@ -265,8 +270,8 @@ class Note extends Mongo {
     /**
      * 物理删除过期14天的笔记
      * */
-    clearExpire (days = 14) {
-        return this.deleteMany({inUse: false, 'time.remove':  {$gte: Date.now() - days * 24 * 60 * 60 * 1000}});
+    clearExpire(days = 14) {
+        return this.deleteMany({inUse: false, 'time.remove': {$gte: Date.now() - days * 24 * 60 * 60 * 1000}});
     }
 
     async increasePV(noteId) {

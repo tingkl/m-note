@@ -90,35 +90,72 @@ class Space extends Mongo {
         return finalSpaceName;
     }
 
-    async searchMyNote(my, condition) {
+    // async searchMyNote(my, condition) {
+    //     let notes;
+    //     let folders;
+    //     if (condition.type === '笔记') {
+    //         notes = await Note.mySearch(my, condition, {name: 1, folderId: 1, private: 1});
+    //         let folderIds = [];
+    //         notes.forEach(note => {
+    //             if (!folderIds.includes(note.folderId)) {
+    //                 folderIds.push(note.folderId);
+    //             }
+    //         });
+    //         folders = await Folder.find({_id: {$in: folderIds}}, null, {spaceId: 1, name: 1});
+    //     } else {
+    //         // 目录检索
+    //         folders = await Folder.mySearch(my, {
+    //             name: {
+    //                 $regex: condition.key,
+    //                 $options: 'is'
+    //             },
+    //             inUse: true
+    //         }, null, {spaceId:  1, name: 1});
+    //         // 通过目录找笔记
+    //         notes = await Note.mySearch(my, {
+    //             folderId: {
+    //                 $in: folders.map(folder => folder._id.toString())
+    //             },
+    //             inUse: true
+    //         });
+    //     }
+    //     let spaceIds = [];
+    //     folders.forEach(folder => {
+    //         if (!spaceIds.includes(folder.spaceId)) {
+    //             spaceIds.push(folder.spaceId);
+    //         }
+    //     });
+    //     let spaces = await this.find({_id: {$in: spaceIds}}, null, {name: 1});
+    //     return {notes, folders, spaces};
+    // }
+
+    async searchMyNote(my, {type, key}) {
         let notes;
         let folders;
-        if (condition.type === '笔记') {
-            notes = await Note.mySearch(my, condition, {name: 1, folderId: 1, private: 1});
-            let folderIds = [];
-            notes.forEach(note => {
-                if (!folderIds.includes(note.folderId)) {
-                    folderIds.push(note.folderId);
-                }
-            });
-            folders = await Folder.find({_id: {$in: folderIds}}, null, {spaceId: 1, name: 1});
-        } else {
-            // 目录检索
+        let condition = {
+            key,
+            inUse: true
+        };
+        // 1. 没有key，则从mongodb中查询所有
+        // 2. 有key，则从es中查询md后者name或者folderId
+        if (type === '目录' && key) {
             folders = await Folder.mySearch(my, {
                 name: {
-                    $regex: condition.key,
+                    $regex: key,
                     $options: 'is'
                 },
                 inUse: true
-            }, null, {spaceId:  1, name: 1});
-            // 通过目录找笔记
-            notes = await Note.mySearch(my, {
-                folderId: {
-                    $in: folders.map(folder => folder._id.toString())
-                },
-                inUse: true
-            })
+            }, null, {_id: 1});
+            condition.folderIds = folders.map(folder => folder._id.toString());
         }
+        notes = await Note.mySearch(my, condition, {name: 1, folderId: 1, private: 1});
+        let folderIds = [];
+        notes.forEach(note => {
+            if (!folderIds.includes(note.folderId)) {
+                folderIds.push(note.folderId);
+            }
+        });
+        folders = await Folder.find({_id: {$in: folderIds}}, null, {spaceId: 1, name: 1});
         let spaceIds = [];
         folders.forEach(folder => {
             if (!spaceIds.includes(folder.spaceId)) {
@@ -128,6 +165,7 @@ class Space extends Mongo {
         let spaces = await this.find({_id: {$in: spaceIds}}, null, {name: 1});
         return {notes, folders, spaces};
     }
+
 
     async deleteSpace(user, spaceId) {
         if (deleteLock.passLock(spaceId)) {
