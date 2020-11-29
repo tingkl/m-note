@@ -129,7 +129,15 @@ VS.GetBlogNoteNeighbor = {
         required: true
     }
 };
-
+VS.CreateLink = {
+    noteId: {
+        required: true
+    },
+    expireDays: {
+        type: 'number',
+        required: true
+    }
+};
 function convertTimeUpdate(update) {
     update.time = {update: update['time.update']};
     delete update['time.update'];
