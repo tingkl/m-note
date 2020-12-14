@@ -8,8 +8,6 @@ const MD5 = require('../util/md5');
 const url = require('url');
 const fs = require('fs');
 const path = require('path');
-const TL = require('../util/timelock');
-const gmLock = TL.get('gm')
 const router = new Router({
     prefix: '/file'
 });

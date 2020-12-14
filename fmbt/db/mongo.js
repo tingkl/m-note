@@ -3,38 +3,39 @@ const db = require('../cf').mongodb();
 const CodeMsg = require('../code-msg');
 const Exception = require('../exception');
 mongoose.Promise = Promise;
-mongoose.set('debug', process.env.NODE_ENV !== 'prod');
-// mongoose.set('debug', true);
+// mongoose.set('debug', process.env.NODE_ENV !== 'prod');
+mongoose.set('debug', true);
 mongoose.set('useFindAndModify', false);
 mongoose.set('useCreateIndex', true);
 mongoose.set('useNewUrlParser', true);
+mongoose.set('useUnifiedTopology', true);
 mongoose.connect(db.url, db.option).then(() => {
     console.log('db connect!', db.url);
 });
-mongoose.connection.on('disconnected', () => {});
+mongoose.connection.on('disconnected', () => { });
 mongoose.connection.on('error', err => {
     console.log(err);
 });
 class Mongo {
     constructor(schema, other) {
         let dbName = this.getName();
-        let Schema = new mongoose.Schema(schema, {collection: dbName, writeConcern: true});
-        this.fields = Object.assign(other ? other(Schema) : {}, {__v: 0});
+        let Schema = new mongoose.Schema(schema, { collection: dbName, writeConcern: true });
+        this.fields = Object.assign(other ? other(Schema) : {}, { __v: 0 });
         this.model = mongoose.model(dbName, Schema);
         // this.model.init()只会初始化有index或者unique的collection
-        this.model.createCollection().then(function(collection) {
+        this.model.createCollection().then(function (collection) {
             console.log('dbName:', dbName, 'ready!');
         }).catch(function (e) {
             console.warn(e.errmsg);
         });
     }
-    getName () {
+    getName() {
         return this.constructor.name;
     }
     getSession() {
         return mongoose.startSession();
     }
-    aggregate (condition, page) {
+    aggregate(condition, page) {
         let Model = this.model;
         if (page) {
             if (page.current < 1) {
@@ -54,18 +55,22 @@ class Mongo {
         }
         return Model.aggregate(condition);
     }
-    deleteMany (condition) {
+    deleteMany(condition) {
         let Model = this.model;
         return Model.deleteMany(condition)
     }
-    save (data, opts) {
+    deleteOne(condition) {
+        let Model = this.model;
+        return Model.deleteOne(condition)
+    }
+    save(data, opts) {
         let Model = this.model;
         let newEntity = new Model(data);
         // 防止影响到async，只返回err和doc
         // todo 测试返回err， entity， other
         return newEntity.save(opts);
     }
-    findOne (condition, sort, fields) {
+    findOne(condition, sort, fields) {
         let Model = this.model;
         fields = fields || this.fields;
         if (sort) {
@@ -74,12 +79,12 @@ class Mongo {
             return Model.findOne(condition).select(fields);
         }
     }
-    findById (id, fields) {
+    findById(id, fields) {
         let Model = this.model;
         fields = fields || this.fields;
         return Model.findById(id, fields);
     }
-    find (condition, sort, fields) {
+    find(condition, sort, fields) {
         let Model = this.model;
         fields = fields || this.fields;
         if (sort) {
@@ -89,13 +94,13 @@ class Mongo {
         }
     }
     // 无需sort时，必须传false
-    async findWithPage (condition, page, sort, fields) {
+    async findWithPage(condition, page, sort, fields) {
         let Model = this.model;
         fields = fields || this.fields;
-        if (page.current < 1) {
+        if (page.current < 1 || !page.current) {
             page.current = 1;
         }
-        if (page.size < 1) {
+        if (page.size < 1 || !page.size) {
             page.size = 10;
         }
         page.current = page.current - 1;
@@ -112,7 +117,7 @@ class Mongo {
         page.total = total;
         return result[1];
     }
-    async findWithNo (condition, no, fields) {
+    async findWithNo(condition, no, fields) {
         if (no && ['down', 'up'].includes(no.flag) && no.hasOwnProperty('maxNo') && no.hasOwnProperty('minNo')) {
             if (!no.size) {
                 no.size = 10;
@@ -128,7 +133,7 @@ class Mongo {
                 // 3
                 // 2
                 // 1
-                result = await Model.find(condition).sort({no: -1}).limit(no.size).select(fields);
+                result = await Model.find(condition).sort({ no: -1 }).limit(no.size).select(fields);
                 if (result && result.length > 0) {
                     no.maxNo = result[0].no;
                     no.minNo = result[result.length - 1].no;
@@ -141,9 +146,9 @@ class Mongo {
                 // 13
                 // 14
                 // 15
-                condition.no = {$gt: no.maxNo};
+                condition.no = { $gt: no.maxNo };
                 // 升序拿去，大于maxNo的，然后结果reverse
-                result = await Model.find(condition).sort({no: 1}).limit(no.size).select(fields);
+                result = await Model.find(condition).sort({ no: 1 }).limit(no.size).select(fields);
                 if (result && result.length > 0) {
                     result = result.reverse();
                     no.maxNo = result[0].no;
@@ -156,8 +161,8 @@ class Mongo {
                 // 13
                 // 12
                 // 11
-                condition.no = {$lt: no.minNo};
-                result = await Model.find(condition).sort({no: -1}).limit(no.size).select(fields);
+                condition.no = { $lt: no.minNo };
+                result = await Model.find(condition).sort({ no: -1 }).limit(no.size).select(fields);
                 if (result && result.length > 0) {
                     no.minNo = result[result.length - 1].no;
                 }
@@ -168,25 +173,25 @@ class Mongo {
         }
     }
     // 更新都应返回更新后的数据
-    findOneAndUpdate (condition, update, opts = {}) {
+    findOneAndUpdate(condition, update, opts = {}) {
         let Model = this.model;
         // 查询和删除都是可以的，但是更新是不能更新不存在的doc
         // todo 修改失败，信息不存在
-        return Model.findOneAndUpdate(condition, update, {new: true, fields: this.fields, ...opts});
+        return Model.findOneAndUpdate(condition, update, { new: true, fields: this.fields, ...opts });
     }
     // 更新都应返回更新后的数据
-    findByIdAndUpdate (id, update, opts = {}) {
+    findByIdAndUpdate(id, update, opts = {}) {
         let Model = this.model;
         delete update._id;
         // 查询和删除都是可以的，但是更新是不能更新不存在的doc
         // todo 修改失败，信息不存在
-        return Model.findByIdAndUpdate(id, update, {new: true, fields: this.fields, ...opts});
+        return Model.findByIdAndUpdate(id, update, { new: true, fields: this.fields, ...opts });
     }
     // 更新都应返回更新后的数据
-    updateOrCreate (condition, update, opts = {}) {
+    updateOrCreate(condition, update, opts = {}) {
         let Model = this.model;
         // setDefaultsOnInsert: true， 如果是新建则使用default的值初始化字段
-        return Model.findOneAndUpdate(condition, update, {new: true, upsert: true, setDefaultsOnInsert: true,  fields: this.fields, ...opts});
+        return Model.findOneAndUpdate(condition, update, { new: true, upsert: true, setDefaultsOnInsert: true, fields: this.fields, ...opts });
     }
     updateMany(condition, update, opts = {}) {
         let Model = this.model;
@@ -196,15 +201,15 @@ class Mongo {
         let Model = this.model;
         return Model.updateOne(condition, update, opts);
     }
-    count (condition) {
+    count(condition) {
         let Model = this.model;
         return Model.countDocuments(condition);
     }
-    distinct (field, condition) {
+    distinct(field, condition) {
         let Model = this.model;
         return Model.distinct(field, condition);
     }
-    findOneAndRemove (condition) {
+    findOneAndRemove(condition) {
         let Model = this.model;
         return Model.findOneAndRemove(condition);
     }

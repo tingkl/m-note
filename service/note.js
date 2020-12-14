@@ -1,14 +1,13 @@
+const Tag = 'note';
 const Mongo = require('../fmbt/db/mongo');
 const CodeMsg = require('../fmbt/code-msg');
 const Exception = require('../fmbt/exception');
 const HtmlUtil = require('../fmbt/util/html');
 const Bus = require('../fmbt/bus');
-const VS = require('../fmbt/validator');
-const TimeLock = require('../fmbt/util/timelock');
+const VS = require('../fmbt/validator')(Tag);
+const TimeLock = require('../fmbt/util/timelock')(Tag);
 const EsNote = require('./es-note');
 const Share = require('./share');
-let publishLock = TimeLock.get('note-publish');
-let deleteLock = TimeLock.get('note-delete');
 
 const schemaDefinition = {
     // 比较名小于30
@@ -154,7 +153,7 @@ class Note extends Mongo {
                 return Share.createLink(user._id, noteId, expireDays);
             }
         } else {
-            throw new Exception(CodeMsg.NotEnoughAuth);
+            throw new Exception(CodeMsg.NotEnoughAuth('尚未登录'));
         }
     }
 
@@ -167,7 +166,7 @@ class Note extends Mongo {
     // 2. main.html中导出
     mySearch(my, condition, fields) {
         condition.userId = my._id;
-        if (condition.key) {
+        if (condition.keys) {
             if (fields) {
                 condition._source = Object.keys(fields);
             }
@@ -184,8 +183,8 @@ class Note extends Mongo {
     // 不带my的是其他人调用，限定了private false
     // blog.html
     async searchPage(condition, page) {
-        let {userId, key, checkAll, folderIds} = condition;
-        if (key) {
+        let {userId, keys, checkAll, folderIds} = condition;
+        if (keys) {
             condition._public = true;
             condition._source = ['name', 'folderId', 'userId', 'preview', 'statics', 'time', 'firstImg'];
             if (checkAll) {
@@ -256,10 +255,10 @@ class Note extends Mongo {
      * 逻辑删除笔记
      * */
     async deleteNote(noteId) {
-        if (deleteLock.passLock(noteId)) {
+        if (TimeLock.passLock('delete:' + noteId)) {
             let note = await this.findOne({_id: noteId, inUse: true}, false, {name: 1, userId: 1, private: 1});
             if (!note) {
-                throw new Exception(CodeMsg.NoteNotExists);
+                throw new Exception(CodeMsg.NotExists('笔记'));
             }
             let now = Date.now();
             if (!note.private) {
@@ -296,7 +295,7 @@ class Note extends Mongo {
 
     async publish(user, body) {
         let {noteId} = await VS.PrivateNoteId.doValidate(body);
-        if (publishLock.passLock(noteId)) {
+        if (TimeLock.passLock('publish:' + noteId)) {
             let update = {
                 private: body.private,
                 'time.update': Date.now()
@@ -331,7 +330,7 @@ class Note extends Mongo {
             if (note.name !== name) {
                 let exists = await this.findOne({folderId: note.folderId, name: name});
                 if (exists) {
-                    throw new Exception(CodeMsg.NoteAlreadyExists);
+                    throw new Exception(CodeMsg.AlreadyExists('笔记'));
                 } else {
                     await Bus.emit('need-update-folder', {note});
                     let update = {name, 'time.update': Date.now()};
@@ -344,7 +343,7 @@ class Note extends Mongo {
                 return note;
             }
         }
-        throw new Exception(CodeMsg.NoteNotExists);
+        throw new Exception(CodeMsg.NotExists('笔记'));
     }
 
     async updateNoteById(noteId, update) {

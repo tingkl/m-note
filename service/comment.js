@@ -1,8 +1,9 @@
+const Tag = 'comment';
 const Mongo = require('../fmbt/db/mongo');
 const CodeMsg = require('../fmbt/code-msg');
 const Exception = require('../fmbt/exception');
 const User = require('./user');
-const VS = require('../fmbt/validator');
+const VS = require('../fmbt/validator')(Tag);
 const schemaDefinition = {
     kind: {
         type: String,

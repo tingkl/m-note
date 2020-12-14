@@ -1,7 +1,6 @@
 const Router = require('koa-router');
 const RS = require('../fmbt/rs');
 const Space = require('../service/space');
-const User = require('../service/user');
 const Import = require('../service/import');
 const Export = require('../service/export');
 const router = new Router({

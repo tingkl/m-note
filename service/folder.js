@@ -1,11 +1,10 @@
+const Tag = 'folder';
 const Mongo = require('../fmbt/db/mongo');
 const CodeMsg = require('../fmbt/code-msg');
 const Exception = require('../fmbt/exception');
 const Bus = require('../fmbt/bus');
-const TimeLock = require('../fmbt/util/timelock');
+const TimeLock = require('../fmbt/util/timelock')(Tag);
 const Redis = require('../fmbt/db/redis');
-// let publishLock = TimeLock.get('folder-publish');
-let deleteLock = TimeLock.get('folder-delete');
 const Note = require('./note');
 const schemaDefinition = {
     // 文件夹名
@@ -76,10 +75,10 @@ class Folder extends Mongo {
     }
 
     async deleteFolder(folderId) {
-        if (deleteLock.passLock(folderId)) {
+        if (TimeLock.passLock(folderId)) {
             let folder = await this.findOne({_id: folderId, inUse: true});
             if (!folder) {
-                throw new Exception(CodeMsg.FolderNotExists);
+                throw new Exception(CodeMsg.NotExists('目录'));
             }
             let now = Date.now();
             folder = await this.findByIdAndUpdate(folderId, {
@@ -127,7 +126,7 @@ class Folder extends Mongo {
             if (folder.name !== name) {
                 let exists = await this.findOne({spaceId: folder.spaceId, name: name});
                 if (exists) {
-                    throw new Exception(CodeMsg.FolderAlreadyExists);
+                    throw new Exception(CodeMsg.AlreadyExists('文件夹'));
                 } else {
                     return this.updateFolderById(folderId, {name});
                 }
@@ -135,7 +134,7 @@ class Folder extends Mongo {
                 return folder;
             }
         }
-        throw new Exception(CodeMsg.FolderNotExists);
+        throw new Exception(CodeMsg.NotExists('目录'));
     }
 
     updateFolderById(folderId, update) {
@@ -169,22 +168,9 @@ class Folder extends Mongo {
             await Bus.emit('need-update-folder', {folderId});
             return rs;
         } else {
-            throw new Exception(CodeMsg.Custom('只能操作自己的目录'));
+            throw new Exception(CodeMsg.Illegal('只能操作自己的目录'));
         }
     }
-
-    // async publish(user, folderId) {
-    //     if (publishLock.passLock(folderId)) {
-    //         let folder = await this.findById(folderId);
-    //         if (folder && folder.userId === user._id) {
-    //             await Bus.emit('need-update-folder', {folderId});
-    //             let rs = await Note.publishByFolder(folderId);
-    //             await Bus.emit('openNote + n', {n: rs.nModified, userId: user._id});
-    //         } else {
-    //             throw new Exception(CodeMsg.FolderNotExists);
-    //         }
-    //     }
-    // }
 
     listFolderOfUser(user, condition = {}) {
         return this.find({...condition, userId: user._id, inUse: true}, {'time.update': -1});
@@ -212,7 +198,7 @@ Bus.once('need-update-folder', async ({folderId, note}) => {
         let throttle = await Redis.get(key);
         if (!throttle) {
             // 秒
-            await Redis.set(key, Date.now(), 10);
+            await Redis.setEx(key, Date.now(), 10);
             let folder = await service.findByIdAndUpdate(folderId, {'time.update': Date.now()});
             if (folder) {
                 await Bus.emit('need-update-space', {folder});

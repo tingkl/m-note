@@ -21,7 +21,7 @@ module.exports = {
             ctx.set('Content-Length', buffer.length);
             return buffer;
         }
-        throw new Exception(CodeMsg.NoteNotExists);
+        throw new Exception(CodeMsg.NotExists('笔记'));
 
     },
     async folder(my, folderId, ctx) {
@@ -46,7 +46,7 @@ module.exports = {
             ctx.set('Content-Length', buffer.length);
             return buffer;
         }
-        throw new Exception(CodeMsg.FolderNotExists);
+        throw new Exception(CodeMsg.NotExists('目录'));
     },
     async space(my, spaceId, ctx) {
         let space = await Space.findById(spaceId);
@@ -68,7 +68,7 @@ module.exports = {
                             if (folder) {
                                 folderMap[note.folderId] = folder;
                             } else {
-                                throw new Exception(CodeMsg.WillNeverHappen);
+                                throw new Exception(CodeMsg.WillNeverHappen('笔记找不到目录'));
                             }
                         }
                         let folder = folderMap[note.folderId];
@@ -85,6 +85,6 @@ module.exports = {
             ctx.set('Content-Length', buffer.length);
             return buffer;
         }
-        throw new Exception(CodeMsg.SpaceNotExists);
+        throw new Exception(CodeMsg.NotExists('空间'));
     }
 };

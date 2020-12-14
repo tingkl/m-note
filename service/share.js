@@ -1,17 +1,6 @@
 const Mongo = require('../fmbt/db/mongo');
 const Util = require('../fmbt/util/index');
 const MD5 = require('../fmbt/util/md5');
-// let publishLock = TimeLock.get('folder-publish');
-// const VS = require('../fmbt/validator');
-// VS.CreateLink = {
-//     noteId: {
-//         required: true
-//     },
-//     expireDays: {
-//         required: true,
-//         type: 'number'
-//     }
-// };
 const schemaDefinition = {
     md5: {
         type: String,

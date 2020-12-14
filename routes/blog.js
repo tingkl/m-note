@@ -118,7 +118,7 @@ router.post('/savePage', async function (ctx) {
         let rs = await User.updateOne({_id: userId}, {['page.' + key]: md});
         ctx.body = RS.success(rs);
     } else {
-        throw new Exception(CodeMsg.InvalidParams, 'contact|link');
+        throw new Exception(CodeMsg.InvalidParams('contact|link'));
     }
 });
 

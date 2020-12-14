@@ -1,3 +1,4 @@
+const Tag = 'user';
 const Mongo = require('../fmbt/db/mongo');
 const CodeMsg = require('../fmbt/code-msg');
 const mongoose = require('mongoose');
@@ -5,7 +6,7 @@ const Exception = require('../fmbt/exception');
 const Space = require('./space');
 const Bus = require('../fmbt/bus');
 const {formPass2DBPass} = require('../fmbt/util/md5');
-const VS = require('../fmbt/validator');
+const VS = require('../fmbt/validator')(Tag);
 const schemaDefinition = {
     wx: {},
     color: {
@@ -423,7 +424,7 @@ class User extends Mongo {
             await Space.createFirstSpace(user, 'My First Space');
             return user;
         } else {
-            throw new Exception(CodeMsg.EmailInUse);
+            throw new Exception(CodeMsg.AlreadyExists('邮箱被使用'));
         }
     }
 
@@ -436,7 +437,7 @@ class User extends Mongo {
         if (user) {
             return user;
         }
-        throw new Exception(CodeMsg.AccountNotExists);
+        throw new Exception(CodeMsg.NotExists('账号密码有误'));
     }
 }
 

@@ -1,13 +1,12 @@
+const Tag = 'space';
 const Mongo = require('../fmbt/db/mongo');
 const CodeMsg = require('../fmbt/code-msg');
 const Note = require('./note');
 const Folder = require('./folder');
 const Exception = require('../fmbt/exception');
-// const Note = require('./note');
 const Bus = require('../fmbt/bus');
-const TimeLock = require('../fmbt/util/timelock');
+const TimeLock = require('../fmbt/util/timelock')(Tag);
 const Redis = require('../fmbt/db/redis');
-let deleteLock = TimeLock.get('space-delete');
 const schemaDefinition = {
     // 空间名小于10
     // space可以重名
@@ -129,22 +128,34 @@ class Space extends Mongo {
     //     return {notes, folders, spaces};
     // }
 
-    async searchMyNote(my, {type, key}) {
+    async searchMyNote(my, {type, keys}) {
         let notes;
         let folders;
         let condition = {
-            key,
-            inUse: true
+            inUse: true,
+            keys
         };
         // 1. 没有key，则从mongodb中查询所有
         // 2. 有key，则从es中查询md后者name或者folderId
-        if (type === '目录' && key) {
+        if (type === '目录' && condition.keys) {
+            let orList = [];
+            condition.keys.forEach(item => {
+                orList.push({
+                    name: {
+                        $regex: item,
+                        $options: 'is'
+                    }
+                })
+            })
             folders = await Folder.mySearch(my, {
-                name: {
-                    $regex: key,
-                    $options: 'is'
-                },
-                inUse: true
+                $and: [
+                    {
+                        inUse: true
+                    },
+                    {
+                        $or: orList
+                    }
+                ] 
             }, null, {_id: 1});
             condition.folderIds = folders.map(folder => folder._id.toString());
         }
@@ -168,13 +179,13 @@ class Space extends Mongo {
 
 
     async deleteSpace(user, spaceId) {
-        if (deleteLock.passLock(spaceId)) {
+        if (TimeLock.passLock('delete:' + spaceId)) {
             if (user.status.lastSpace._id === spaceId) {
-                throw new Exception(CodeMsg.CannotDeleteLastSpace);
+                throw new Exception(CodeMsg.Illegal('不能删除正在使用的空间'));
             } else {
                 let space = await this.findOne({_id: spaceId, inUse: true, userId: user._id});
                 if (!space) {
-                    throw new Exception(CodeMsg.SpaceNotExists);
+                    throw new Exception(CodeMsg.NotExists('空间'));
                 }
                 let now = Date.now();
                 space = await this.findByIdAndUpdate(spaceId, {
@@ -209,7 +220,7 @@ class Space extends Mongo {
                 return space;
             }
         }
-        throw new Exception(CodeMsg.FolderNotExists);
+        throw new Exception(CodeMsg.NotExists('目录'));
     }
 
     // my的是自己用的，限定user
@@ -238,7 +249,7 @@ Bus.once('need-update-space', async ({folder}) => {
         let key = 'need-update-space-' + spaceId;
         let throttle = await Redis.get(key);
         if (!throttle) {
-            await Redis.set(key, Date.now(), 10);
+            await Redis.setEx(key, Date.now(), 10);
             return service.findByIdAndUpdate(spaceId, {'time.update': Date.now()});
         }
     } else {

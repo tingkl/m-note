@@ -15,7 +15,7 @@ module.exports = {
                 // throw的或者reje8ct的都能捕捉到
                 ctx.body = RS.fail(e.codeMsg);
             } else {
-                ctx.body = RS.fail(CodeMsg.ServerError, e);
+                ctx.body = RS.fail(CodeMsg.ServerError(e.toString()));
             }
         }
     },

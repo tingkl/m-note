@@ -4,6 +4,13 @@ let dateFormat = require('dateformat');
 let path = require('path');
 log4js.addLayout('json', function(config) {
     return function(log) {
+        log.data.forEach((item, i) => {
+            if (item) {
+                if (item instanceof Error) {
+                    log.data[i] = item.toString();
+                }
+            }
+        });
         return JSON.stringify({level: log.level.levelStr, time: dateFormat(log.startTime, "yy/mm/dd HH:MM:s:l"), app: log.categoryName, data: log.data}) + config.separator;
     }
 });
@@ -11,11 +18,17 @@ log4js.addLayout('colored-json', function(config) {
     return function(log, timezoneOffset) {
         let path = '';
         log.data.forEach((item, i) => {
-            if (item && (typeof item == 'object')) {
-                if (item.app) {
-                    path = item.app + '/' + (item.apiName ? item.apiName : '');
+            if (item) {
+                let msg = '';
+                if (item instanceof Error) {
+                    msg = item.toString();
+                } else {
+                    if (item.app) {
+                        path = item.app + '/' + (item.apiName ? item.apiName : '');
+                    }
+                    json = JSON.stringify(item);
                 }
-                log.data[i] = JSON.stringify(item);
+                log.data[i] = json;
             }
         });
         if (path) {

@@ -3,7 +3,6 @@ const RS = require('../fmbt/rs');
 const Note = require('../service/note');
 const Export = require('../service/export');
 const Import = require('../service/import');
-// const CodeMsg = require('../fmbt/code-msg');
 const router = new Router({
     prefix: '/note'
 });

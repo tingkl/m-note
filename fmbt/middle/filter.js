@@ -89,7 +89,7 @@ module.exports = async function (ctx, next) {
                 await next();
             } else {
                 // 权限不足
-                throw new Exception(CodeMsg.NotEnoughAuth);
+                throw new Exception(CodeMsg.NotEnoughAuth(hit));
             }
         } else {
             // 没有命中，不需要过滤

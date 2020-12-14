@@ -70,7 +70,7 @@ class Note extends Elastic {
         return this._putMappings(Mappings.properties);
     }
 
-    searchPage({key, userId, _public, _source, folderIds}, page) {
+    searchPage({keys, userId, _public, _source, folderIds}, page) {
         let must = [
             {
                 match: {
@@ -92,8 +92,9 @@ class Note extends Elastic {
                 }
             })
         }
-        let should = [
-            {
+        let should = []
+        keys.forEach(key => {
+            should.push({
                 match: {
                     name: {
                         // name中出现权重大
@@ -109,13 +110,13 @@ class Note extends Elastic {
                         boost: 1
                     }
                 }
-            }
-        ]
+            })
+        })
         if (folderIds && folderIds.length > 0) {
             should.push({
                 terms: {
                     folderId: folderIds,
-                    boost: 1
+                    boost: 2
                 }
             })
         }
