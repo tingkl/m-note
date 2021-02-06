@@ -9,6 +9,13 @@ const {formPass2DBPass} = require('../fmbt/util/md5');
 const VS = require('../fmbt/validator')(Tag);
 const schemaDefinition = {
     wx: {},
+    prefer: {
+        searchType: {
+            type: String,
+            default: '目录',
+            enum: ['笔记', '目录']
+        }
+    },
     color: {
         space: {
             type: String,
@@ -455,6 +462,12 @@ Bus.once('openNote + n', function ({n, userId}) {
 });
 Bus.once('openNote - n', function ({n, userId}) {
     return service.findByIdAndUpdate(userId, {$inc: {'tj.openNoteCount': -n}});
+});
+Bus.once('根据类型做了检索', function ({sessionUser, type}) {
+    let prefer = sessionUser.prefer || {};
+    prefer.searchType = type;
+    sessionUser.prefer = prefer;
+    return service.updateOne({_id: sessionUser._id}, {'prefer.searchType': type});
 });
 
 module.exports = service;

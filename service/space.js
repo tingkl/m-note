@@ -128,7 +128,7 @@ class Space extends Mongo {
     //     return {notes, folders, spaces};
     // }
 
-    async searchMyNote(my, {type, keys}) {
+    async searchMyNote(sessionUser, {type, keys}) {
         let notes;
         let folders;
         let condition = {
@@ -147,7 +147,7 @@ class Space extends Mongo {
                     }
                 })
             })
-            folders = await Folder.mySearch(my, {
+            folders = await Folder.mySearch(sessionUser, {
                 $and: [
                     {
                         inUse: true
@@ -155,11 +155,11 @@ class Space extends Mongo {
                     {
                         $or: orList
                     }
-                ] 
+                ]
             }, null, {_id: 1});
             condition.folderIds = folders.map(folder => folder._id.toString());
         }
-        notes = await Note.mySearch(my, condition, {name: 1, folderId: 1, private: 1});
+        notes = await Note.mySearch(sessionUser, condition, {name: 1, folderId: 1, private: 1});
         let folderIds = [];
         notes.forEach(note => {
             if (!folderIds.includes(note.folderId)) {
@@ -174,6 +174,9 @@ class Space extends Mongo {
             }
         });
         let spaces = await this.find({_id: {$in: spaceIds}}, null, {name: 1});
+        Bus.emit('根据类型做了检索', {sessionUser, type}).catch(function (e) {
+            console.error(e);
+        });
         return {notes, folders, spaces};
     }
 
