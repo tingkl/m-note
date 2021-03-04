@@ -1,15 +1,17 @@
 const MU = require('../fmbt/util/mail');
 const uuid = require('uuid');
+const {user, pass} = require('../fmbt/cf').email;
+const fs = require('fs');
 const me = {
-    async sendAuth (authId) {
+    async sendAuth (authId, toEmail) {
         let cid = uuid.v1();
         let rs = await MU.send({
             service: 'qq',
-            user: '339776223',
-            pass: 'tingkl11720946',
-            from: '"MNote" <339776223@qq.com>'
+            user,
+            pass,
+            from: '"MNote" <' + user + '@qq.com>'
         }, {
-            tos: ['339776223@qq.com'],
+            tos: [toEmail],
             subject: '来自于MNote的认证链接',
             html: 
             `<img src="cid:${cid}"/><br/>
@@ -17,19 +19,19 @@ const me = {
             `,
             attachments: [{
                 filename: 'image.png',
-                path: '/root/app/m-note-rd/public/favicon.png',
+                path: fs.join(__dirname, '../public/favicon.png'),
                 cid
             }]
         });
 
         /**
-         * { accepted: [ '339776223@qq.com' ],
+         * { accepted: [ 'xxx@qq.com' ],
          *  rejected: [],
          *  envelopeTime: 226,
          *  messageTime: 483,
          *  messageSize: 7287,
          *  response: '250 OK: queued as.',
-         *  envelope: { from: '339776223@qq.com', to: [ '339776223@qq.com' ] },
+         *  envelope: { from: 'xxx@qq.com', to: [ 'xxx@qq.com' ] },
          *  messageId: '<2c18ed71-e198-d12a-69f4-7b4d3caf418b@qq.com>' }
          * 
          */
@@ -40,6 +42,4 @@ const me = {
     }
 }
 module.export = me;
-
-// me.sendAuth();
 

@@ -48,6 +48,10 @@ module.exports = {
     gmDirPath: path.join(__dirname, '..', publicDir, gmDir),
     excelDirPath: path.join(__dirname, '..', publicDir, excelDir),
     serverRoot: profile === 'local' ? '/api' : '',
+    email: {
+        user: '你的服务邮箱用户名',
+        pass: '你的服务邮箱密码'
+    },
     getServerFilePath(filename) {
         return path.join(this.uploadDirPath, filename);
     },
