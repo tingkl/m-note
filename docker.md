@@ -8,3 +8,6 @@ docker run -it -p 4455:4455 tingkl/mnote:0.1 sh -c 'su esuser'
 
 sh /home/esuser/start.sh 
 
+随后即可通过浏览器访问服务
+
+http://localhost:4455/main.html
